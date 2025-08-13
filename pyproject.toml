@@ -1,0 +1,16 @@
+[project]
+name = "eventbackend"
+version = "0.1.0"
+description = "Entry @ Silico Battles 2025"
+authors = [
+    { name = "Trayambak Rai", email = "xtrayambak@disroot.org" }
+]
+requires-python = ">=3.13"
+
+dependencies = [
+    "flask",
+    "redis"
+]
+
+[tool.pip-tools]
+generate-hashes = true
