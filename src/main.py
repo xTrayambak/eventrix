@@ -4,6 +4,7 @@
 
 # Flask for the HTTP server
 from flask import Flask, request, jsonify
+from flask_cors import *
 
 # SimpleSQLite for the ORM
 from simplesqlite import SimpleSQLite
@@ -12,6 +13,7 @@ from simplesqlite.model import Integer, Model, Text
 # Other STL utils
 import secrets
 import time
+import json
 
 AdministratorRole = 0
 ParticipantRole = 1
@@ -45,7 +47,7 @@ def get_db() -> SimpleSQLite:
         User.insert(User(
             id = 0,
             name = "Administrator",
-            password = "ThisIsATest",
+            password = "Test",
             role = AdministratorRole
         ))
 
@@ -57,11 +59,16 @@ def get_db() -> SimpleSQLite:
     return db
 
 app = Flask("event-backend")
+CORS(app)
 
 def generate_token_for_user(id: int) -> dict:
     created_at = int(time.time())
     code = secrets.token_hex(32)
     db = get_db()
+
+    print("Tokens")
+    for tok in Token.select():
+        print(tok)
 
     Token.insert(
         Token(
@@ -130,8 +137,12 @@ def verify_creds():
 @app.route("/auth/login", methods = ["POST"])
 def login():
     db = get_db()
-    username = request.form.get("username")
-    password = request.form.get("password")
+    
+    data = json.loads(request.data)
+    username = data["username"]
+    password = data["password"]
+
+    print(f"Username: {username}, password: {password}")
     
     for user in User.select():
         if user.name != username:
@@ -139,6 +150,8 @@ def login():
 
         if user.password != password:
             continue
+
+        print("Found user!!!")
         
         db.close()
         return jsonify({
@@ -156,6 +169,7 @@ def login():
     }), 401
 
 @app.route("/users/list", methods = ["GET"])
+# TODO: Call this when admin logs into dashboard
 def get_users():
     intercept = verify_creds()
     if intercept:
