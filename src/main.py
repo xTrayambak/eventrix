@@ -8,12 +8,11 @@ from flask_cors import *
 
 # SimpleSQLite for the ORM
 from simplesqlite import SimpleSQLite
-from simplesqlite.model import Integer, Model, Text
+from simplesqlite.model import *
 
 # Other STL utils
 import secrets
 import time
-import json
 
 AdministratorRole = 0
 ParticipantRole = 1
@@ -36,12 +35,28 @@ class Token(Model):
     created_at = Integer(not_null = True, unique = False)
     uid = Integer(not_null = True)
 
+class Event(Model):
+    name = Text(not_null = True, unique = False, primary_key = True)
+    date = Text(not_null = True, unique = False, primary_key = False)
+    venue = Text(not_null = True, unique = False, primary_key = False)
+    participants = Text(not_null = True, unique = False)
+
+def parse_participants(value: str) -> list[int]:
+    res = []
+
+    for id in value.split(';'):
+        res.append(int(id))
+
+    return res
+
 def get_db() -> SimpleSQLite:
     db = SimpleSQLite("data.sqlite", "a")
     User.attach(db)
     Token.attach(db)
+    Event.attach(db)
 
     try:
+        Event.create()
         User.create()
 
         User.insert(User(
@@ -65,10 +80,6 @@ def generate_token_for_user(id: int) -> dict:
     created_at = int(time.time())
     code = secrets.token_hex(32)
     db = get_db()
-
-    print("Tokens")
-    for tok in Token.select():
-        print(tok)
 
     Token.insert(
         Token(
@@ -138,11 +149,9 @@ def verify_creds():
 def login():
     db = get_db()
     
-    data = json.loads(request.data)
+    data = request.get_json()
     username = data["username"]
     password = data["password"]
-
-    print(f"Username: {username}, password: {password}")
     
     for user in User.select():
         if user.name != username:
@@ -150,8 +159,6 @@ def login():
 
         if user.password != password:
             continue
-
-        print("Found user!!!")
         
         db.close()
         return jsonify({
@@ -188,6 +195,28 @@ def get_users():
     db.close()
     return jsonify(payload), 200
 
+@app.route("/events/list", methods = ["GET"])
+def events_list():
+    intercept = verify_creds()
+    if intercept:
+        return intercept
+    
+    db = get_db()
+    payload = {"events": []}
+
+    for event in Event.select():
+        payload["events"].append(
+            {
+                "name": event.name,
+                "date": event.date,
+                "venue": event.venue,
+                "participants": parse_participants(event.participants)
+            }
+        )
+
+    db.close()
+    return jsonify(payload), 200
+
 @app.route("/events/create", methods = ["POST"])
 def events_create():
     intercept = verify_creds()
@@ -198,4 +227,21 @@ def events_create():
 
     event = data["event"]
     event_name = event["name"]
+    event_date = event["date"]
     event_participants = event["participants"]
+    event_venue = event["venue"]
+
+    db = get_db()
+
+    Event.insert(
+        Event(
+            name = event_name,
+            date = event_date,
+            participants = ';'.join(event_participants),
+            venue = event_venue
+        )
+    )
+    db.commit()
+    db.close()
+
+    return "", 200
