@@ -6,6 +6,7 @@ mkShell {
     python3
     python313Packages.flask
     python313Packages.simplesqlite
+    python313Packages.flask-cors
     sqlite
   ];
 

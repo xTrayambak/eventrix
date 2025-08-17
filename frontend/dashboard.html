@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Eventrix — Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body class="">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="left-group">
+      <button id="hamburger" class="btn-icon" title="Menu">☰</button>
+      <img id="topLogo" class="brand-inline" src="logo-dark.png" alt="Eventrix" />
+      <button id="todayBtn" class="btn">Today</button>
+
+      <!-- separate arrows around month/year -->
+      <button id="prevBtn" class="btn-icon" title="Previous">‹</button>
+      <button id="monthLabelBtn" class="month-label-btn">
+        <span id="monthLabel" class="month-text">—</span>
+      </button>
+      <button id="nextBtn" class="btn-icon" title="Next">›</button>
+    </div>
+
+    <div class="center-group">
+      <div class="segmented">
+        <button class="seg-btn active" data-view="week" id="viewWeek">Week</button>
+        <button class="seg-btn" data-view="month" id="viewMonth">Month</button>
+      </div>
+    </div>
+
+    <div class="right-group">
+      <div class="segmented">
+        <button class="seg-btn active" id="tabCalendar">Calendar</button>
+        <button class="seg-btn" id="tabTasks">Tasks</button>
+      </div>
+
+      <button id="theme-toggle" class="btn">☀ Light</button>
+      <button id="avatarBtn" class="profile-btn" title="Account">U</button>
+    </div>
+  </header>
+
+  <!-- Main shell -->
+  <div class="shell collapsed"><!-- collapsed by default per request -->
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="side-inner">
+        <div class="brand">
+          <img id="sideLogo" src="logo-dark.png" alt="Eventrix Logo" />
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Create</div>
+          <div class="create-actions">
+            <button class="btn w-full" data-create="event">+ Event</button>
+            <button class="btn w-full" data-create="task">+ Task</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Mini Calendar</div>
+          <div class="mini-cal-head">
+            <button id="miniPrev" class="btn-icon" title="Previous month">‹</button>
+            <div id="miniTitle" class="mini-title">—</div>
+            <button id="miniNext" class="btn-icon" title="Next month">›</button>
+          </div>
+          <div id="miniCalendar" class="mini-calendar"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Upcoming Events</div>
+          <div id="upcomingList" class="events-list"></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Collapsed state create button (+ only when sidebar hidden) -->
+    <button id="collapsedPlus" class="collapsed-plus" title="Create">+</button>
+    <div id="collapsedCreate" class="collapsed-create">
+      <button class="drop-item" data-create="event">Event</button>
+      <button class="drop-item" data-create="task">Task</button>
+    </div>
+
+    <!-- Main content -->
+    <main class="content">
+      <!-- CALENDAR VIEW -->
+      <section id="calendarView" class="calendar">
+        <!-- Week header (visible in week view) -->
+        <div id="weekHeader" class="cal-header grid-8">
+          <div class="tz">GMT+05:30</div>
+          <div class="dow" data-day="0"></div>
+          <div class="dow" data-day="1"></div>
+          <div class="dow" data-day="2"></div>
+          <div class="dow" data-day="3"></div>
+          <div class="dow" data-day="4"></div>
+          <div class="dow" data-day="5"></div>
+          <div class="dow" data-day="6"></div>
+        </div>
+
+        <!-- Month header (visible in month view) -->
+        <div id="monthHeader" class="month-header hidden">
+          <div>SUN</div><div>MON</div><div>TUE</div><div>WED</div><div>THU</div><div>FRI</div><div>SAT</div>
+        </div>
+
+        <div id="calBody" class="cal-body">
+          <!-- Week view body -->
+          <div id="timeCol" class="time-col">
+            <div class="time">1 AM</div><div class="time">2 AM</div><div class="time">3 AM</div>
+            <div class="time">4 AM</div><div class="time">5 AM</div><div class="time">6 AM</div>
+            <div class="time">7 AM</div><div class="time">8 AM</div><div class="time">9 AM</div>
+            <div class="time">10 AM</div><div class="time">11 AM</div><div class="time">12 PM</div>
+            <div class="time">1 PM</div><div class="time">2 PM</div><div class="time">3 PM</div>
+            <div class="time">4 PM</div><div class="time">5 PM</div><div class="time">6 PM</div>
+            <div class="time">7 PM</div><div class="time">8 PM</div><div class="time">9 PM</div>
+            <div class="time">10 PM</div><div class="time">11 PM</div>
+          </div>
+          <div id="weekGrid" class="week-grid"></div>
+
+          <!-- Month view body -->
+          <div id="monthGrid" class="month-grid hidden"></div>
+        </div>
+      </section>
+
+      <!-- TASKS VIEW -->
+      <section id="tasksView" class="tasks hidden">
+        <div class="tasks-card">
+          <div class="tasks-header">
+            <div class="tasks-title">My Tasks</div>
+            <button id="addTaskBtn" class="btn">+ Add a task</button>
+          </div>
+          <div id="tasksList" class="tasks-list"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Right Drawer -->
+  <aside id="drawer" class="drawer" aria-hidden="true">
+    <div class="drawer-header">
+      <div class="drawer-title">Account</div>
+      <button id="drawerClose" class="btn-icon" aria-label="Close">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="info-row">
+        <div class="info-label">Username</div>
+        <div id="infoUsername" class="info-value">User</div>
+      </div>
+      <div class="info-row">
+        <div class="info-label">Role</div>
+        <div id="infoRole" class="info-value">Participant</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Month label click popup mini calendar -->
+  <div id="monthPopup" class="month-popup hidden">
+    <div class="mini-cal-pop">
+      <div class="mini-cal-head">
+        <button id="popPrev" class="btn-icon">‹</button>
+        <div id="popTitle" class="mini-title">—</div>
+        <button id="popNext" class="btn-icon">›</button>
+      </div>
+      <div id="popCalendar" class="mini-calendar"></div>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

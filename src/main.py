@@ -13,6 +13,9 @@ from simplesqlite.model import *
 # Other STL utils
 import secrets
 import time
+import logging
+
+logging.basicConfig(level = logging.DEBUG)
 
 AdministratorRole = 0
 ParticipantRole = 1
@@ -37,7 +40,8 @@ class Token(Model):
 
 class Event(Model):
     name = Text(not_null = True, unique = False, primary_key = True)
-    date = Text(not_null = True, unique = False, primary_key = False)
+    date = Integer(not_null = True, unique = False, primary_key = False)
+    end = Integer(not_null = True, unique = False, primary_key = False)
     venue = Text(not_null = True, unique = False, primary_key = False)
     participants = Text(not_null = True, unique = False)
 
@@ -49,37 +53,58 @@ def parse_participants(value: str) -> list[int]:
 
     return res
 
-def get_db() -> SimpleSQLite:
-    db = SimpleSQLite("data.sqlite", "a")
-    User.attach(db)
-    Token.attach(db)
-    Event.attach(db)
+def close_db(db: SimpleSQLite):
+    print("closed db")
+    # db.close()
 
+def mk_db_structs() -> SimpleSQLite:
+    gdb = SimpleSQLite("data.sqlite", "a")
+    Event.attach(gdb)
+    User.attach(gdb)
+    Token.attach(gdb)
+    
     try:
         Event.create()
-        User.create()
+    except: pass
 
+    try:
+        User.create()
+    except: pass
+
+    try:
+        Token.create()
+    except: pass
+
+    try:
         User.insert(User(
             id = 0,
             name = "Administrator",
             password = "Test",
             role = AdministratorRole
         ))
-
-        Token.create()
     except:
         pass
-    
-    db.commit()
-    return db
+
+    try:
+        Event.insert(Event(
+            name = "Example Fest",
+            date = 1755400500000,
+            end = 1755419400000,
+            venue = "Example School Noida",
+            participants = "0;1"
+        ))
+    except: print("skibidi error"); pass
+
+    gdb.commit()
 
 app = Flask("event-backend")
 CORS(app)
 
+mk_db_structs()
+
 def generate_token_for_user(id: int) -> dict:
     created_at = int(time.time())
     code = secrets.token_hex(32)
-    db = get_db()
 
     Token.insert(
         Token(
@@ -89,8 +114,6 @@ def generate_token_for_user(id: int) -> dict:
         )
     )
     
-    db.commit()
-    db.close()
     return {
             "code": code,
             "expires_at": created_at + TokenLifetimeSecs
@@ -103,7 +126,9 @@ def find_user(uid: int) -> User:
 
 def get_token_privilege(token: str) -> int:
     current_time = int(time.time())
-    db = get_db()
+    db = SimpleSQLite("data.sqlite", "r")
+    Token.attach(db)
+    User.attach(db)
     
     for tok in Token.select():
         if token != tok.code:
@@ -116,10 +141,10 @@ def get_token_privilege(token: str) -> int:
         if not user:
             raise ValueError("BUG: No such user exists with the token provided")
 
-        db.close()
+        close_db(db)
         return user.role
 
-    db.close()
+    close_db(db)
 
 def verify_creds():
     # im missing nim template abuse already :(
@@ -147,7 +172,9 @@ def verify_creds():
 
 @app.route("/auth/login", methods = ["POST"])
 def login():
-    db = get_db()
+    db = SimpleSQLite("data.sqlite", "a")
+    User.attach(db)
+    Token.attach(db)
     
     data = request.get_json()
     username = data["username"]
@@ -160,6 +187,7 @@ def login():
         if user.password != password:
             continue
         
+        token = generate_token_for_user(user.id)
         db.close()
         return jsonify({
             "details": {
@@ -167,10 +195,10 @@ def login():
                 "password": user.password,
                 "role": user.role,
             },
-            "token": generate_token_for_user(user.id)
+            "token": token 
         }), 200
     
-    db.close()
+    close_db(db)
     return jsonify({
         "error": "INVALIDLOGIN"
     }), 401
@@ -182,7 +210,8 @@ def get_users():
     if intercept:
         return intercept
 
-    db = get_db()
+    db = SimpleSQLite("data.sqlite", "r")
+    User.attach(db)
     payload = {"users": []}
 
     for user in User.select():
@@ -191,8 +220,8 @@ def get_users():
             "role": user.role,
             "id": user.id
         })
-
-    db.close()
+    
+    close_db(db)
     return jsonify(payload), 200
 
 @app.route("/events/list", methods = ["GET"])
@@ -201,7 +230,8 @@ def events_list():
     if intercept:
         return intercept
     
-    db = get_db()
+    db = SimpleSQLite("data.sqlite", "r")
+    Event.attach(db)
     payload = {"events": []}
 
     for event in Event.select():
@@ -209,12 +239,13 @@ def events_list():
             {
                 "name": event.name,
                 "date": event.date,
+                "end": event.end,
                 "venue": event.venue,
                 "participants": parse_participants(event.participants)
             }
         )
-
-    db.close()
+    
+    close_db(db)
     return jsonify(payload), 200
 
 @app.route("/events/create", methods = ["POST"])
@@ -231,7 +262,8 @@ def events_create():
     event_participants = event["participants"]
     event_venue = event["venue"]
 
-    db = get_db()
+    db = SimpleSQLite("data.sqlite", "a")
+    Event.attach(db)
 
     Event.insert(
         Event(
@@ -242,6 +274,6 @@ def events_create():
         )
     )
     db.commit()
-    db.close()
+    close_db(db)
 
     return "", 200
