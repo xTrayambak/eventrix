@@ -12,7 +12,7 @@
   <header class="topbar">
     <div class="left-group">
       <button id="hamburger" class="btn-icon" title="Menu">☰</button>
-      <img id="topLogo" class="brand-inline" src="logo-dark.png" alt="Eventrix" />
+      <!-- <img id="topLogo" class="brand-inline" src="logo-dark.png" alt="Eventrix" /> -->
       <button id="todayBtn" class="btn">Today</button>
 
       <!-- separate arrows around month/year -->
@@ -78,12 +78,19 @@
     <!-- Collapsed state create button (+ only when sidebar hidden) -->
     <button id="collapsedPlus" class="collapsed-plus" title="Create">+</button>
     <div id="collapsedCreate" class="collapsed-create">
-      <button class="drop-item" data-create="event">Event</button>
+      <button class="drop-item" id="create-event" data-create="event">Event</button>
       <button class="drop-item" data-create="task">Task</button>
     </div>
 
     <!-- Main content -->
     <main class="content">
+      <section id="createEventDialog" class="hidden">
+	      <input type="text" placeholder="Event Name" id="eventNameInput">
+	      <input type="text" placeholder="Event Venue" id="eventVenueInput">
+	      <input type="text" placeholder="Event Start Date" id="eventStartDateInput">
+	      <input type="text" placeholder="Event End Date" id="eventEndDateInput">
+	      <button id="createEventBtn">Submit</button>
+      </section>
       <!-- CALENDAR VIEW -->
       <section id="calendarView" class="calendar">
         <!-- Week header (visible in week view) -->
@@ -149,6 +156,10 @@
       <div class="info-row">
         <div class="info-label">Role</div>
         <div id="infoRole" class="info-value">Participant</div>
+      </div>
+
+      <div class="credits">
+        <div class="credits-label">Made with ❤️ by <strong>The Void</strong></div>
       </div>
     </div>
   </aside>

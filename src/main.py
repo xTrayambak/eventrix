@@ -93,7 +93,7 @@ def mk_db_structs() -> SimpleSQLite:
             venue = "Example School Noida",
             participants = "0;1"
         ))
-    except: print("skibidi error"); pass
+    except: pass
 
     gdb.commit()
 
@@ -224,6 +224,24 @@ def get_users():
     close_db(db)
     return jsonify(payload), 200
 
+@app.route("/users/info", methods = ["GET"])
+def get_user():
+    intercept = verify_creds()
+    if intercept: return intercept
+
+    db = SimpleSQLite("data.sqlite", "r")
+    id = response.get_json()["id"]
+    User.attach(db)
+    for user in User.select():
+        if user.id != id:
+            continue
+
+        return jsonify({
+            "id": user.id,
+            "name": user.name,
+            "role": user.role
+        }), 200
+
 @app.route("/events/list", methods = ["GET"])
 def events_list():
     intercept = verify_creds()
@@ -248,6 +266,80 @@ def events_list():
     close_db(db)
     return jsonify(payload), 200
 
+@app.route("/events/change_name", methods = ["POST"])
+def event_editname():
+    intercept = verify_creds()
+    if intercept:
+        return intercept
+
+    db = SimpleSQLite("data.sqlite", "a")
+
+    data = request.get_json()
+    name = data["target"]
+    updated = data["updated"]
+
+    Event.attach(db)
+    Event.update(set_query = [Event(Event.name, updated)], where = Where(Event.name, name))
+    db.commit()
+
+    return "", 200
+
+@app.route("/events/add_participants", methods = ["POST"])
+def event_addparticipants():
+    intercept = verify_creds()
+    if intercept:
+        return intercept
+
+    data = request.get_json()
+    name = data["target"]
+    updated = data["updated"]
+
+    db = SimpleSQLite("data.sqlite", "a")
+
+    Event.attach(db)
+    participants = []
+    for event in Event.select():
+        if event.name != name:
+            continue
+
+        participants = event.participants.split(';')
+        break
+
+    participants.append(updated)
+    Event.update(set_query = [Event(Event.participants, ';'.join(participants))], where = Where(Event.name, name))
+    db.commit()
+    return "", 200
+
+@app.route("/events/remove_participants", methods = ["POST"])
+def event_rmparticipants():
+    intercept = verify_creds()
+    if intercept:
+        return intercept
+
+    data = request.get_json()
+    name = data["target"]
+    remove = data["remove"]
+
+    db = SimpleSQLite("data.sqlite", "a")
+
+    Event.attach(db)
+    participants = []
+    for event in Event.select():
+        if event.name != name:
+            continue
+
+        participants = event.participants.split(';')
+        break
+    
+    try:
+        del participants[participants.index(remove)]
+    except:
+        return "", 400
+
+    Event.update(set_query = [Event(Event.participants, ';'.join(participants))], where = Where(Event.name, name))
+    db.commit()
+    return "", 200
+
 @app.route("/events/create", methods = ["POST"])
 def events_create():
     intercept = verify_creds()
@@ -259,6 +351,7 @@ def events_create():
     event = data["event"]
     event_name = event["name"]
     event_date = event["date"]
+    event_stop = event["end_date"]
     event_participants = event["participants"]
     event_venue = event["venue"]
 
@@ -268,7 +361,8 @@ def events_create():
     Event.insert(
         Event(
             name = event_name,
-            date = event_date,
+            date = int(event_date),
+            end = int(event_stop),
             participants = ';'.join(event_participants),
             venue = event_venue
         )

@@ -1,0 +1,186 @@
+
+body {
+    font-family: Arial, sans-serif;
+    background: radial-gradient(circle at center, #000000, #8A2BE2, #000000); 
+    color: white;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    transition: background 0.5s ease, color 0.5s ease;
+}
+
+.light {
+    background: radial-gradient(circle at center, #ffffff, #1bb6e1, #ffffff); 
+    color: black;
+}
+
+
+:root {
+    --glow-main: #8A2BE2;       
+    --glow-contrast: #DF73FF;   
+}
+
+.light {
+    --glow-main: #1bb6e1;       
+    --glow-contrast: #007BFF;   
+}
+
+
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+}
+
+.logo {
+    height: 100px;
+    width: auto;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 0 8px var(--glow-main)) drop-shadow(0 0 15px var(--glow-contrast));
+}
+
+
+#welcome-text {
+    margin-top: 150px;
+    transition: transform 0.5s ease, color 0.3s ease;
+    font-size: 100px;
+    color: var(--glow-contrast);
+    text-shadow: 0 0 8px var(--glow-main), 0 0 15px var(--glow-contrast);
+}
+
+.move-up {
+    transform: translateY(-2px);
+}
+
+.btn-container {
+    margin-top: -20px;
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+
+.fade-in {
+    opacity: 1;
+}
+
+
+.btn-login {
+    background: transparent;
+    border: 2px solid var(--glow-main);
+    color: var(--glow-main);
+    padding: 10px 30px;
+    font-size: 32px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 8px var(--glow-main);
+}
+
+.btn-login:hover {
+    background: var(--glow-main);
+    color: #000000;
+    transform: scale(1.05);
+}
+
+.light .btn-login:hover {
+    color: #ffffff;
+}
+
+
+.btn-theme {
+    background: transparent;
+    border: 2px solid var(--glow-main);
+    color: var(--glow-main);
+    padding: 6px 15px;
+    font-size: 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 8px var(--glow-main);
+}
+
+.btn-theme:hover {
+    background: var(--glow-main);
+    color: #000000;
+    transform: scale(1.05);
+}
+
+.light .btn-theme:hover {
+    color: #ffffff;
+}
+
+
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(20px);
+    background-color: rgba(0, 0, 0, 0.3); 
+}
+
+
+.modal-content {
+    background: transparent;
+    border: 2px solid var(--glow-main);
+    box-shadow: 0 0 15px var(--glow-main);
+    color: var(--glow-main);
+    margin: 10% auto;
+    padding: 20px;
+    width: 350px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+
+.modal-content h2, h4 {
+    color: var(--glow-contrast);
+    text-shadow: 0 0 5px var(--glow-main);
+}
+
+.modal-content h4 {
+    color: rgb(190, 0, 0);
+}
+
+.close-btn {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--glow-main);
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: var(--glow-contrast);
+}
+
+
+.username-field,
+.pass-field
+{
+    width: 80%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 2px solid var(--glow-main);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--glow-contrast);
+    font-size: 16px;
+    outline: none;
+    box-shadow: 0 0 8px var(--glow-main);
+}
+
+.input-field::placeholder {
+    color: var(--glow-main);
+}
+
+
+.modal-btn {
+    margin-top: 10px;
+    width: 85%;
+}
