@@ -304,7 +304,6 @@ async function getEvents() {
       day: startTs.getDay(),
       startEpoch: event.date,
       endEpoch: event.end,
-      participants: event.participants
     });
   }
 
@@ -674,47 +673,15 @@ const closeDetailsBtn = document.getElementById("closeDetailsBtn");
 
 let editingEvent = null;
 
-async function getAllUsers()
-{
-	const resp = await fetch(
-		`${BackendUrl}/users/list`, {
-			method: "GET",
-			headers: {
-				Authorization: `Bearer ${authInfo.token}`
-			}
-		}
-	)
-
-	if (!resp.ok)
-	{
-		alert("Failed to get user list from server");
-		return;
-	}
-
-	const data = await resp.json();
-	return data.users;
-}
-
 // Open popup
-async function openEventPopup(defaultStart=null, defaultEnd=null) {
-  const users = await getAllUsers();
-  var usernames = [];
-  
-  editingEvent.participants.forEach(partic => {
-    var found = false
-    for (let u of users)
-    {
-	    if (u.id == partic) { found = true; usernames.push(u.name); }
-    }
-  })
-
+function openEventPopup(defaultStart=null, defaultEnd=null) {
   const isEditing = !!editingEvent;
   popupTitle.textContent = isEditing ? "Edit Event" : "Create Event";
   popupEventName.value = isEditing ? editingEvent.title : "";
   popupEventVenue.value = isEditing ? editingEvent.venue : "";
   popupEventStart.value = defaultStart || (isEditing ? new Date(editingEvent.startEpoch).toISOString().slice(0,16) : "");
   popupEventEnd.value = defaultEnd || (isEditing ? new Date(editingEvent.endEpoch).toISOString().slice(0,16) : "");
-  popupParticipants.value = usernames.join(", ")
+  popupParticipants.value = isEditing ? (editingEvent.participants ? editingEvent.participants.join(",") : "") : "";
   eventPopup.classList.remove("hidden");
 }
 
@@ -724,27 +691,6 @@ popupCancel.addEventListener("click", ()=> eventPopup.classList.add("hidden"));
 popupSave.addEventListener("click", async ()=>{
   const partsRaw = popupParticipants.value.trim();
   const parts = partsRaw ? partsRaw.split(",").map(x=>x.trim()).filter(x=>x) : [];
-  const users = await getAllUsers();
-  var uids = [];
-
-	console.log(users);
-  
-  parts.forEach(part => {
-	  var found = false;
-	  users.forEach(user => {
-		  if (user.name == part) {
-			  uids.push(user.id);
-			  found = true;
-		  }
-	  });
-          
-	  if (!found) {
-	  	alert(`Cannot find user: ${part}`);
-	  	return;
-	  }
-  })
-
-	console.log(uids)
 
   if (!editingEvent) {
     // ---- Create New Event ----
@@ -754,7 +700,7 @@ popupSave.addEventListener("click", async ()=>{
         venue: popupEventVenue.value,
         date: new Date(popupEventStart.value).getTime(),
         end_date: new Date(popupEventEnd.value).getTime(),
-        participants: uids
+        participants: parts
       }
     };
 
@@ -788,15 +734,30 @@ popupSave.addEventListener("click", async ()=>{
     }
 
     // 2. Sync participants
-    const oldUids = editingEvent.participants || [];
+    const oldParts = editingEvent.participants || [];
+    const toAdd = parts.filter(p => !oldParts.includes(p));
+    const toRemove = oldParts.filter(p => !parts.includes(p));
 
-    await fetch(`${BackendUrl}/events/set_participants`, {
-      method:"POST",
-      headers:{
+    for (let p of toAdd) {
+      await fetch(`${BackendUrl}/events/add_participants`, {
+        method:"POST",
+        headers:{
           "Content-Type":"application/json",
           Authorization: `Bearer ${authInfo.token}`
-      },
-      body: JSON.stringify({ target: editingEvent.title, updated: uids })});
+        },
+        body: JSON.stringify({ target: newName, updated: p })
+      });
+    }
+    for (let p of toRemove) {
+      await fetch(`${BackendUrl}/events/remove_participants`, {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization: `Bearer ${authInfo.token}`
+        },
+        body: JSON.stringify({ target: newName, remove: p })
+      });
+    }
 
     // (Future: update venue/date/time when backend supports)
   }
@@ -808,28 +769,13 @@ popupSave.addEventListener("click", async ()=>{
 
 
 // Open details popup
-async function openDetailsPopup(ev) {
-  const users = await getAllUsers();
-  var usernames = [];
-
-  ev.participants.forEach(partic => {
-    var found = false
-    for (let u of users)
-    {
-	    if (u.id == partic) { found = true; usernames.push(u.name); }
-    }
-
-    if (!found)
-	  usernames.push(`Deleted User (${partic})`);
-  })
-
+function openDetailsPopup(ev) {
   editingEvent = ev;
   detailsTitle.textContent = ev.title;
-  console.log(ev);
-  detailsVenue.textContent = ev.venue === undefined ? "Not specified" : ev.venue;
+  detailsVenue.textContent = ev.venue;
   detailsStart.textContent = new Date(ev.startEpoch).toLocaleString();
   detailsEnd.textContent = new Date(ev.endEpoch).toLocaleString();
-  detailsParticipants.textContent = ev.participants ? usernames.join(", ") : "—";
+  detailsParticipants.textContent = ev.participants ? ev.participants.join(", ") : "—";
   eventDetailsPopup.classList.remove("hidden");
 }
 closeDetailsBtn.addEventListener("click", ()=> eventDetailsPopup.classList.add("hidden"));
@@ -872,5 +818,19 @@ function renderEvents() {
       openDetailsPopup(ev);
     });
     col.appendChild(el);
+  });
+}
+
+const logoutBtn = document.getElementById("logoutBtn");
+
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", () => {
+    // Clear auth info
+    localStorage.removeItem("username");
+    localStorage.removeItem("password");
+    localStorage.removeItem("theme"); // optional
+
+    // Redirect to landing page
+    window.location.href = "index.html";
   });
 }
