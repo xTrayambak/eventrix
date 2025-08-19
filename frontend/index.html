@@ -18,10 +18,12 @@
 <h1 id="welcome-text"></h1>
 
 
-<div class="btn-container" id="buttons">
-  <button id="open-login" class="btn-login">Login</button>
-</div>
 
+<div class="btn-container" id="buttons">
+    <button id="open-login" class="btn-login">Login</button>
+    <button id="open-register" class="btn-login">Register</button>
+  </div>
+  
 
 <div id="login-modal" class="modal">
   <div class="modal-content">
@@ -33,6 +35,19 @@
     <button type="button" class="btn-login modal-btn btn-login-submit">Submit</button>
   </div>
 </div>
+
+<div id="register-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h2>Create Account</h2>
+      <h4 id="register-message"></h4>
+      <input type="text" placeholder="Username" class="username-field">
+      <input type="password" placeholder="Password" class="pass-field">
+
+      <button type="button" class="btn-login modal-btn btn-register-submit">Submit</button>
+    </div>
+  </div>
+  
 
 <script src="script.js"></script>
 </body>
