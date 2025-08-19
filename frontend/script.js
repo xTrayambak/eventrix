@@ -98,10 +98,17 @@ window.addEventListener("click", (event) => {
 const registerBtn = document.getElementById("open-register");
 const registerModal = document.getElementById("register-modal");
 const registerCloseBtn = registerModal.querySelector(".close-btn");
-const regUserField = registerModal.getElementsByClassName("reg-username-field")[0];
-const regPassField = registerModal.getElementsByClassName("reg-pass-field")[0];
-const regSubmitBtn = registerModal.getElementsByClassName("btn-register-submit")[0];
+const regUserField = document.getElementsByClassName("username-field")[1];
+const regPassField = document.getElementsByClassName("pass-field")[1];
+const regSubmitBtn = document.getElementsByClassName("btn-register-submit")[0];
 const registerStatus = document.getElementById("register-message");
+
+// this is... annoying
+function assert(b) { if (!b) {console.error("assertion failed")} }
+
+assert(regUserField != undefined)
+assert(regPassField != undefined)
+assert(regSubmitBtn != undefined)
 
 // Open modal
 registerBtn.addEventListener("click", () => {
@@ -146,7 +153,7 @@ regSubmitBtn.addEventListener("click", async () => {
     registerStatus.style.color = "green";
     registerStatus.textContent = "✅ Account created! You can now log in.";
     setTimeout(() => { registerModal.style.display = "none"; }, 1500);
-
+    window.location.href = 'dashboard.html';
   } catch (exc) {
     registerStatus.textContent = "An error occurred.";
     throw exc;

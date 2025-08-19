@@ -9,6 +9,7 @@ from flask_cors import *
 # SimpleSQLite for the ORM
 from simplesqlite import SimpleSQLite
 from simplesqlite.model import *
+from simplesqlite.query import Set, Where
 
 # Other STL utils
 import secrets
@@ -254,6 +255,7 @@ def events_list():
     payload = {"events": []}
 
     for event in Event.select():
+        print(event.participants)
         payload["events"].append(
             {
                 "name": event.name,
@@ -307,7 +309,7 @@ def authregister():
     ))
     return "", 200
 
-@app.route("/events/add_participants", methods = ["POST"])
+@app.route("/events/set_participants", methods = ["POST"])
 def event_addparticipants():
     intercept = verify_creds()
     if intercept:
@@ -315,21 +317,23 @@ def event_addparticipants():
 
     data = request.get_json()
     name = data["target"]
-    updated = data["updated"]
+    participants = data["updated"]
 
     db = SimpleSQLite("data.sqlite", "a")
 
     Event.attach(db)
-    participants = []
-    for event in Event.select():
+    """for event in Event.select():
         if event.name != name:
             continue
 
         participants = event.participants.split(';')
-        break
+        break"""
+    
+    participants = [str(p) for p in participants]
+    print(participants, '\n', ';'.join(participants))
+    print("^^^ TS PMO")
 
-    participants.append(updated)
-    Event.update(set_query = [Event(Event.participants, ';'.join(participants))], where = Where(Event.name, name))
+    Event.update(set_query = [Set(Event.participants, ';'.join(participants))], where = Where(Event.name, name))
     db.commit()
     return "", 200
 
