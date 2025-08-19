@@ -47,6 +47,11 @@ class Event(Model):
     venue = Text(not_null = True, unique = False, primary_key = False)
     participants = Text(not_null = True, unique = False)
 
+class Task(Model):
+    name = Text(not_null = True)
+    due = Integer(not_null = True)
+    uid = Integer(not_null = True)
+
 def parse_participants(value: str) -> list[int]:
     res = []
 
@@ -351,8 +356,6 @@ def event_addparticipants():
         break"""
     
     participants = [str(p) for p in participants]
-    print(participants, '\n', ';'.join(participants))
-    print("^^^ TS PMO")
 
     Event.update(set_query = [Set(Event.participants, ';'.join(participants))], where = Where(Event.name, name))
     db.commit()
@@ -406,12 +409,14 @@ def events_create():
     db = SimpleSQLite("data.sqlite", "a")
     Event.attach(db)
 
+    participants = [str(p) for p in event_participants]
+
     Event.insert(
         Event(
             name = event_name,
             date = int(event_date),
             end = int(event_stop),
-            participants = ';'.join(event_participants),
+            participants = ';'.join(participants),
             venue = event_venue
         )
     )

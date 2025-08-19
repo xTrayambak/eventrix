@@ -304,6 +304,7 @@ async function getEvents() {
       day: startTs.getDay(),
       startEpoch: event.date,
       endEpoch: event.end,
+      participants: event.participants
     });
   }
 
@@ -408,8 +409,8 @@ function switchToMonth() {
   updateMonthLabel();
   buildMonthGrid(current);
 }
-viewWeekBtn.addEventListener("click", switchToWeek);
-viewMonthBtn.addEventListener("click", switchToMonth);
+// viewWeekBtn.addEventListener("click", switchToWeek);
+// viewMonthBtn.addEventListener("click", switchToMonth);
 
 /* ------------ Navigation (separate arrows) ------------ */
 prevBtn.addEventListener("click", () => {
@@ -673,24 +674,62 @@ const closeDetailsBtn = document.getElementById("closeDetailsBtn");
 
 let editingEvent = null;
 
+async function getUsers()
+{
+	const resp = await fetch(`${BackendUrl}/users/list`);
+	const data = await resp.json();
+
+	return data.users;
+}
+
 // Open popup
-function openEventPopup(defaultStart=null, defaultEnd=null) {
+async function openEventPopup(defaultStart=null, defaultEnd=null) {
+  var names = [];
+  const users = await getUsers();
+
+  for (user of users) {
+		if (editingEvent.participants.includes(user.id))
+			names.push(user.name)
+	}
   const isEditing = !!editingEvent;
   popupTitle.textContent = isEditing ? "Edit Event" : "Create Event";
   popupEventName.value = isEditing ? editingEvent.title : "";
   popupEventVenue.value = isEditing ? editingEvent.venue : "";
   popupEventStart.value = defaultStart || (isEditing ? new Date(editingEvent.startEpoch).toISOString().slice(0,16) : "");
   popupEventEnd.value = defaultEnd || (isEditing ? new Date(editingEvent.endEpoch).toISOString().slice(0,16) : "");
-  popupParticipants.value = isEditing ? (editingEvent.participants ? editingEvent.participants.join(",") : "") : "";
+  popupParticipants.value = names.join(", ");
   eventPopup.classList.remove("hidden");
 }
 
 popupCancel.addEventListener("click", ()=> eventPopup.classList.add("hidden"));
 
+async function getUserIds(names)
+{
+	const users = await getUsers();
+	var userIds = [];
+	for (name of names) {
+		var found = false;
+		for (user of users) {
+			if (user.name == name) {
+				userIds.push(user.id);
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+			alert(`No such user found: ${user}`)
+	}
+
+	return userIds;
+}
+
 // Save event
 popupSave.addEventListener("click", async ()=>{
   const partsRaw = popupParticipants.value.trim();
   const parts = partsRaw ? partsRaw.split(",").map(x=>x.trim()).filter(x=>x) : [];
+  const users = await getUserIds(parts);
+console.log(users)
 
   if (!editingEvent) {
     // ---- Create New Event ----
@@ -700,9 +739,11 @@ popupSave.addEventListener("click", async ()=>{
         venue: popupEventVenue.value,
         date: new Date(popupEventStart.value).getTime(),
         end_date: new Date(popupEventEnd.value).getTime(),
-        participants: parts
+        participants: users
       }
     };
+
+    console.log(payload)
 
     const resp = await fetch(`${BackendUrl}/events/create`, {
       method:"POST",
@@ -734,30 +775,17 @@ popupSave.addEventListener("click", async ()=>{
     }
 
     // 2. Sync participants
-    const oldParts = editingEvent.participants || [];
-    const toAdd = parts.filter(p => !oldParts.includes(p));
-    const toRemove = oldParts.filter(p => !parts.includes(p));
+    const oldParts = editingEvent.participants;
 
-    for (let p of toAdd) {
-      await fetch(`${BackendUrl}/events/add_participants`, {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          Authorization: `Bearer ${authInfo.token}`
-        },
-        body: JSON.stringify({ target: newName, updated: p })
-      });
-    }
-    for (let p of toRemove) {
-      await fetch(`${BackendUrl}/events/remove_participants`, {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          Authorization: `Bearer ${authInfo.token}`
-        },
-        body: JSON.stringify({ target: newName, remove: p })
-      });
-    }
+    await fetch(`${BackendUrl}/events/set_participants`, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization: `Bearer ${authInfo.token}`
+      },
+      body: JSON.stringify({ target: newName, updated: parts })
+      }
+    );
 
     // (Future: update venue/date/time when backend supports)
   }
@@ -769,34 +797,44 @@ popupSave.addEventListener("click", async ()=>{
 
 
 // Open details popup
-function openDetailsPopup(ev) {
+async function openDetailsPopup(ev) {
+  const users = await getUsers();
+	console.log(users)
+  var names = [];
+	console.log(ev)
+
+  for (user of users) {
+		if (ev.participants.includes(user.id))
+			names.push(user.name)
+	}
   editingEvent = ev;
   detailsTitle.textContent = ev.title;
   detailsVenue.textContent = ev.venue;
   detailsStart.textContent = new Date(ev.startEpoch).toLocaleString();
   detailsEnd.textContent = new Date(ev.endEpoch).toLocaleString();
-  detailsParticipants.textContent = ev.participants ? ev.participants.join(", ") : "—";
+  detailsParticipants.textContent = names;
   eventDetailsPopup.classList.remove("hidden");
 }
 closeDetailsBtn.addEventListener("click", ()=> eventDetailsPopup.classList.add("hidden"));
-editEventBtn.addEventListener("click", ()=>{
+editEventBtn.addEventListener("click", async ()=> {
   eventDetailsPopup.classList.add("hidden");
-  openEventPopup();
+  await openEventPopup();
+  renderEvents();
 });
 
 // Hook up UI
-document.querySelector('[data-create="event"]').addEventListener("click", ()=> {
+document.querySelector('[data-create="event"]').addEventListener("click", async ()=>{
   editingEvent = null;
-  openEventPopup();
+  await openEventPopup();
 });
 
 // Calendar cell click → create event with default times
 document.querySelectorAll(".day-col").forEach(col=>{
-  col.addEventListener("click",(e)=>{
+  col.addEventListener("click",async(e)=>{
     const dayIso = col.dataset.iso;
     const start = new Date(dayIso + "T09:00:00");
     const end = new Date(dayIso + "T10:00:00");
-    openEventPopup(start.toISOString().slice(0,16), end.toISOString().slice(0,16));
+    await openEventPopup(start.toISOString().slice(0,16), end.toISOString().slice(0,16));
   });
 });
 
