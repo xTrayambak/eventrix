@@ -344,30 +344,41 @@ function buildMonthGrid(base) {
   monthGrid.innerHTML = "";
   const year = base.getFullYear();
   const month = base.getMonth();
-  const first = new Date(year, month, 1);
-  const start = startOfWeek(first); // start from Sunday of the first row
   const todayStr = new Date().toDateString();
 
-  // 6 rows x 7 days (42 cells)
+  // Find first visible day (Sunday before or equal to 1st of month)
+  const firstOfMonth = new Date(year, month, 1);
+  const start = startOfWeek(firstOfMonth);
+
+  // Always show 42 days (6 weeks)
   for (let i = 0; i < 42; i++) {
     const d = new Date(start);
     d.setDate(start.getDate() + i);
 
     const cell = document.createElement("div");
     cell.className = "month-cell";
+
+    // Mark "outside" days (from prev/next month)
     if (d.getMonth() !== month) cell.classList.add("out");
+    // Mark "today"
     if (d.toDateString() === todayStr) cell.classList.add("today");
 
+    // Put date number top-right
     cell.innerHTML = `<div class="mday">${d.getDate()}</div>`;
     cell.dataset.iso = d.toISOString().slice(0, 10);
+
+    // Click → jump to week view
     cell.addEventListener("click", () => {
       current = new Date(d);
-      switchToWeek(); // clicking jumps to week of that date
+      switchToWeek();
     });
 
     monthGrid.appendChild(cell);
   }
 }
+
+
+
 
 /* ------------ View switching ------------ */
 function switchToWeek() {
@@ -512,37 +523,103 @@ monthPopup.addEventListener("click", (e) => {
 paintSideMini();
 
 /* ------------ Tasks + Upcoming ------------ */
-let tasks = [
-  { text: "Prepare website for Dexterity", due: "in [2] days", done: true },
-  { text: "Go to Silico Battles 21.1", due: "in [5] days", done: false },
-  { text: "Collect the rolling trophy", due: "in [5] days", done: false },
-];
-function paintTasks() {
-  tasksList.innerHTML = tasks
-    .map(
-      (t, i) => `
-    <label class="task-item">
-      <input type="checkbox" ${t.done ? "checked" : ""} data-i="${i}" />
-      <span>${t.text} — <em>${t.due}</em></span>
-    </label>
-  `,
-    )
-    .join("");
+// ===== TASKS =====
+const taskPopup = document.getElementById("taskPopup");
+const taskNameInput = document.getElementById("taskNameInput");
+const taskDueInput = document.getElementById("taskDueInput");
+const taskSaveBtn = document.getElementById("taskSaveBtn");
+const taskCancelBtn = document.getElementById("taskCancelBtn");
+const taskList = document.getElementById("taskList");
+
+let tasks = [];
+
+// Open popup from "Add Task" button
+document.getElementById("addTaskBtn").addEventListener("click", () => {
+  taskNameInput.value = "";
+  taskDueInput.value = "";
+  taskPopup.classList.remove("hidden");
+});
+
+// Cancel popup
+taskCancelBtn.addEventListener("click", () => {
+  taskPopup.classList.add("hidden");
+});
+
+// Save task
+taskSaveBtn.addEventListener("click", async () => {
+  const payload = {
+    task: {
+      name: taskNameInput.value,
+      due: new Date(taskDueInput.value).getTime()
+    }
+  };
+
+  const resp = await fetch(`${BackendUrl}/tasks/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authInfo.token}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (resp.ok) {
+    taskPopup.classList.add("hidden");
+    await loadTasks();   // reload the list
+  } else {
+    alert("Failed to create task");
+  }
+});
+
+// Load tasks from backend
+async function loadTasks() {
+  const resp = await fetch(`${BackendUrl}/tasks/list`, {
+    headers: { Authorization: `Bearer ${authInfo.token}` }
+  });
+  if (!resp.ok) return;
+  tasks = await resp.json();
+  renderTasks();
 }
-tasksList.addEventListener("change", (e) => {
-  if (e.target.matches('input[type="checkbox"]')) {
-    const i = +e.target.dataset.i;
-    tasks[i].done = e.target.checked;
-  }
-});
-addTaskBtn.addEventListener("click", () => {
-  const text = prompt("Add a task:");
-  if (text && text.trim()) {
-    tasks.unshift({ text: text.trim(), due: "soon", done: false });
-    paintTasks();
-  }
-});
-paintTasks();
+
+// Render tasks into the Tasks page list
+function renderTasks() {
+  taskList.innerHTML = "";
+  tasks.forEach(task => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <input type="checkbox">
+      <span>${task.name} (due ${new Date(task.due).toLocaleDateString()})</span>
+    `;
+    const checkbox = li.querySelector("input");
+    checkbox.addEventListener("change", async () => {
+      if (checkbox.checked) {
+        await fetch(`${BackendUrl}/tasks/remove`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authInfo.token}`
+          },
+          body: JSON.stringify({ target: task.name })
+        });
+        li.remove(); // instantly update UI
+      }
+    });
+    taskList.appendChild(li);
+  });
+}
+
+// Initial load when Tasks page is opened
+loadTasks();
+// Hook up sidebar "+ Task" button as well
+const sidebarTaskBtn = document.querySelector('[data-create="task"]');
+if (sidebarTaskBtn) {
+  sidebarTaskBtn.addEventListener("click", () => {
+    taskNameInput.value = "";
+    taskDueInput.value = "";
+    taskPopup.classList.remove("hidden");
+  });
+}
+
 
 function paintUpcoming() {
   var buffer = "";
@@ -574,3 +651,172 @@ function setTab(which) {
 }
 tabCalendar.addEventListener("click", () => setTab("calendar"));
 tabTasks.addEventListener("click", () => setTab("tasks"));
+// Popup elements
+const eventPopup = document.getElementById("eventPopup");
+const popupTitle = document.getElementById("popupTitle");
+const popupEventName = document.getElementById("popupEventName");
+const popupEventVenue = document.getElementById("popupEventVenue");
+const popupEventStart = document.getElementById("popupEventStart");
+const popupEventEnd = document.getElementById("popupEventEnd");
+const popupParticipants = document.getElementById("popupParticipants");
+const popupSave = document.getElementById("popupSave");
+const popupCancel = document.getElementById("popupCancel");
+
+const eventDetailsPopup = document.getElementById("eventDetailsPopup");
+const detailsTitle = document.getElementById("detailsTitle");
+const detailsVenue = document.getElementById("detailsVenue");
+const detailsStart = document.getElementById("detailsStart");
+const detailsEnd = document.getElementById("detailsEnd");
+const detailsParticipants = document.getElementById("detailsParticipants");
+const editEventBtn = document.getElementById("editEventBtn");
+const closeDetailsBtn = document.getElementById("closeDetailsBtn");
+
+let editingEvent = null;
+
+// Open popup
+function openEventPopup(defaultStart=null, defaultEnd=null) {
+  const isEditing = !!editingEvent;
+  popupTitle.textContent = isEditing ? "Edit Event" : "Create Event";
+  popupEventName.value = isEditing ? editingEvent.title : "";
+  popupEventVenue.value = isEditing ? editingEvent.venue : "";
+  popupEventStart.value = defaultStart || (isEditing ? new Date(editingEvent.startEpoch).toISOString().slice(0,16) : "");
+  popupEventEnd.value = defaultEnd || (isEditing ? new Date(editingEvent.endEpoch).toISOString().slice(0,16) : "");
+  popupParticipants.value = isEditing ? (editingEvent.participants ? editingEvent.participants.join(",") : "") : "";
+  eventPopup.classList.remove("hidden");
+}
+
+popupCancel.addEventListener("click", ()=> eventPopup.classList.add("hidden"));
+
+// Save event
+popupSave.addEventListener("click", async ()=>{
+  const partsRaw = popupParticipants.value.trim();
+  const parts = partsRaw ? partsRaw.split(",").map(x=>x.trim()).filter(x=>x) : [];
+
+  if (!editingEvent) {
+    // ---- Create New Event ----
+    const payload = {
+      event: {
+        name: popupEventName.value,
+        venue: popupEventVenue.value,
+        date: new Date(popupEventStart.value).getTime(),
+        end_date: new Date(popupEventEnd.value).getTime(),
+        participants: parts
+      }
+    };
+
+    const resp = await fetch(`${BackendUrl}/events/create`, {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        Authorization: `Bearer ${authInfo.token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) {
+      alert("Failed to create event");
+      return;
+    }
+  } else {
+    // ---- Edit Existing Event ----
+    const oldName = editingEvent.title;
+    const newName = popupEventName.value;
+
+    // 1. Change name if needed
+    if (oldName !== newName) {
+      await fetch(`${BackendUrl}/events/change_name`, {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization: `Bearer ${authInfo.token}`
+        },
+        body: JSON.stringify({ target: oldName, updated: newName })
+      });
+    }
+
+    // 2. Sync participants
+    const oldParts = editingEvent.participants || [];
+    const toAdd = parts.filter(p => !oldParts.includes(p));
+    const toRemove = oldParts.filter(p => !parts.includes(p));
+
+    for (let p of toAdd) {
+      await fetch(`${BackendUrl}/events/add_participants`, {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization: `Bearer ${authInfo.token}`
+        },
+        body: JSON.stringify({ target: newName, updated: p })
+      });
+    }
+    for (let p of toRemove) {
+      await fetch(`${BackendUrl}/events/remove_participants`, {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          Authorization: `Bearer ${authInfo.token}`
+        },
+        body: JSON.stringify({ target: newName, remove: p })
+      });
+    }
+
+    // (Future: update venue/date/time when backend supports)
+  }
+
+  eventPopup.classList.add("hidden");
+  events = [];
+  await getEvents(); // refresh
+});
+
+
+// Open details popup
+function openDetailsPopup(ev) {
+  editingEvent = ev;
+  detailsTitle.textContent = ev.title;
+  detailsVenue.textContent = ev.venue;
+  detailsStart.textContent = new Date(ev.startEpoch).toLocaleString();
+  detailsEnd.textContent = new Date(ev.endEpoch).toLocaleString();
+  detailsParticipants.textContent = ev.participants ? ev.participants.join(", ") : "—";
+  eventDetailsPopup.classList.remove("hidden");
+}
+closeDetailsBtn.addEventListener("click", ()=> eventDetailsPopup.classList.add("hidden"));
+editEventBtn.addEventListener("click", ()=>{
+  eventDetailsPopup.classList.add("hidden");
+  openEventPopup();
+});
+
+// Hook up UI
+document.querySelector('[data-create="event"]').addEventListener("click", ()=> {
+  editingEvent = null;
+  openEventPopup();
+});
+
+// Calendar cell click → create event with default times
+document.querySelectorAll(".day-col").forEach(col=>{
+  col.addEventListener("click",(e)=>{
+    const dayIso = col.dataset.iso;
+    const start = new Date(dayIso + "T09:00:00");
+    const end = new Date(dayIso + "T10:00:00");
+    openEventPopup(start.toISOString().slice(0,16), end.toISOString().slice(0,16));
+  });
+});
+
+// Modify renderEvents to allow clicking events
+function renderEvents() {
+  document.querySelectorAll(".day-col").forEach((col) => (col.innerHTML = ""));
+  events.forEach((ev) => {
+    const col = weekGrid.querySelector(`.day-col[data-day-index="${ev.day}"]`);
+    if (!col) return;
+    const top = toMinutes(ev.start);
+    const height = toMinutes(ev.end) - toMinutes(ev.start);
+    const el = document.createElement("div");
+    el.className = "event";
+    el.style.top = `${top}px`;
+    el.style.height = `${height}px`;
+    el.innerHTML = `<div><strong>${ev.title}</strong></div><div>${ev.start} – ${ev.end}</div>`;
+    el.addEventListener("click", (e)=> {
+      e.stopPropagation();
+      openDetailsPopup(ev);
+    });
+    col.appendChild(el);
+  });
+}
