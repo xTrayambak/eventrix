@@ -175,6 +175,63 @@
       <div id="popCalendar" class="mini-calendar"></div>
     </div>
   </div>
+  <!-- Event Create/Edit Popup -->
+<div id="eventPopup" class="popup hidden">
+  <div class="popup-content">
+    <h2 id="popupTitle">Create Event</h2>
+    <label>Event Name</label>
+    <input type="text" id="popupEventName">
+
+    <label>Venue</label>
+    <input type="text" id="popupEventVenue">
+
+    <label>Start Date & Time</label>
+    <input type="datetime-local" id="popupEventStart">
+
+    <label>End Date & Time</label>
+    <input type="datetime-local" id="popupEventEnd">
+
+    <label>Participants (comma separated usernames)</label>
+    <input type="text" id="popupParticipants">
+
+    <div class="popup-actions">
+      <button id="popupSave" class="btn">Save</button>
+      <button id="popupCancel" class="btn">Cancel</button>
+    </div>
+  </div>
+</div>
+<!-- Event Details Popup -->
+<div id="eventDetailsPopup" class="popup hidden">
+  <div class="popup-content">
+    <h2 id="detailsTitle"></h2>
+    <p><strong>Venue:</strong> <span id="detailsVenue"></span></p>
+    <p><strong>Start:</strong> <span id="detailsStart"></span></p>
+    <p><strong>End:</strong> <span id="detailsEnd"></span></p>
+    <p><strong>Participants:</strong> <span id="detailsParticipants"></span></p>
+
+    <div class="popup-actions">
+      <button id="editEventBtn" class="btn">Edit</button>
+      <button id="closeDetailsBtn" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+<!-- Task Create Popup -->
+<div id="taskPopup" class="popup hidden">
+  <div class="popup-content">
+    <h2>Create Task</h2>
+    <label>Task Name</label>
+    <input type="text" id="taskNameInput">
+
+    <label>Due Date</label>
+    <input type="date" id="taskDueInput">
+
+    <div class="popup-actions">
+      <button id="taskSaveBtn" class="btn">Save</button>
+      <button id="taskCancelBtn" class="btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
 
   <script src="dashboard.js"></script>
 </body>
