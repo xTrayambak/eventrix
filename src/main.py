@@ -14,6 +14,7 @@ from simplesqlite.model import *
 import secrets
 import time
 import logging
+import uuid
 
 logging.basicConfig(level = logging.DEBUG)
 
@@ -282,6 +283,28 @@ def event_editname():
     Event.update(set_query = [Event(Event.name, updated)], where = Where(Event.name, name))
     db.commit()
 
+    return "", 200
+
+@app.route("/auth/register", methods = ["POST"])
+def authregister():
+    data = request.get_json()
+    username = data["username"]
+    password = data["password"]
+
+    db = SimpleSQLite("data.sqlite", "a")
+    User.attach(db)
+    
+    for user in User.select():
+        if user.name == username:
+            return jsonify({"error": "USEREXISTS"}), 400
+    
+    id = uuid.uuid4().int & 0xFFFFFFFF
+    User.insert(User(
+        id = id,
+        name = username,
+        password = password,
+        role = 1
+    ))
     return "", 200
 
 @app.route("/events/add_participants", methods = ["POST"])
