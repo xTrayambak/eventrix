@@ -772,7 +772,7 @@ popupSave.addEventListener("click", async ()=>{
 function openDetailsPopup(ev) {
   editingEvent = ev;
   detailsTitle.textContent = ev.title;
-  detailsVenue.textContent = ev.venue;
+  detailsVenue.textContent = ev.venue == undefined ? "Not specified" : ev.venue;
   detailsStart.textContent = new Date(ev.startEpoch).toLocaleString();
   detailsEnd.textContent = new Date(ev.endEpoch).toLocaleString();
   detailsParticipants.textContent = ev.participants ? ev.participants.join(", ") : "—";
