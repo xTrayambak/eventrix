@@ -148,13 +148,57 @@ body.light .dow.today .date{color:#fff}
 
 /* month view */
 .month-header{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;border-bottom:2px solid var(--glow-main);padding:8px 6px;color:var(--glow-main);font-weight:700;text-align:center}
-.month-grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:100px;padding:8px;gap:6px}
-.month-cell{position:relative;border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:6px;background:rgba(0,0,0,.15)}
-body.light .month-cell{background:rgba(255,255,255,.35)}
-.month-cell .mday{position:absolute;top:6px;right:8px;font-size:12px;color:var(--glow-main)}
-.month-cell.out{opacity:.55}
-.month-cell.today{box-shadow:0 0 10px var(--glow-main);border:2px solid var(--glow-main)}
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr); /* 7 equal columns for days */
+  grid-auto-rows: 120px; /* each row = one week */
+  padding: 12px;
+  gap: 10px;
+}
 
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);  /* 7 equal columns */
+  grid-auto-rows: 120px;                  /* each row has fixed height */
+  padding: 0;
+  gap: 0;                                 /* seamless like Google Calendar */
+  border: 1px solid var(--cal-borders);   /* outer border */
+}
+
+.month-cell {
+  position: relative;
+  border: 1px solid var(--cal-borders);
+  background: rgba(0,0,0,.15);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 4px;
+  min-height: 100px;   /* ensure equal height */
+}
+
+body.light .month-cell {
+  background: rgba(255,255,255,.35);
+}
+
+.month-cell .mday {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--glow-main);
+  margin-bottom: 4px;
+}
+
+.month-cell.today {
+  background: rgba(138, 43, 226, 0.25);
+  border: 2px solid var(--glow-main);
+}
+
+.month-cell.out .mday {
+  color: #888; /* dull grey for prev/next months */
+}
+
+
+.month-cell.empty {background: transparent;border: none;}
 .event{position:absolute;left:6px;right:6px;border-radius:10px;border:2px solid var(--glow-main);color:#000;background:var(--glow-main);padding:6px 8px;font-size:12px;box-shadow:0 0 10px var(--glow-main);overflow:hidden;transition: 0.15s ease}
 .event:hover{transform:scale(105%)}
 body.light .event{color:#fff}
@@ -188,9 +232,72 @@ body.light .tasks-card{background:rgba(255,255,255,.5)}
 .task-item input{transform:scale(1.2)}
 
 /* 8) DRAWER */
-.drawer{position:fixed;top:0;right:-360px;width:320px;height:100vh;background:rgba(0,0,0,.5);backdrop-filter:blur(0px);border-left:2px solid var(--glow-main);transition:right .25s ease;z-index:40;display:grid;grid-template-rows:auto 1fr}
-body.light .drawer{background:rgba(255,255,255,.65)}
-.drawer.open{right:0}
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100vh;
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(6px);
+  border-left: 2px solid var(--glow-main);
+  transform: translateX(100%);     /* hide off-screen */
+  transition: transform 0.3s ease;
+  z-index: 100;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.drawer.open {
+  transform: translateX(0);        /* slide in */
+}
+
+/* Prevent body from scrolling horizontally */
+body {
+  overflow-x: hidden;
+}
+/* Popup modal */
+.popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+.popup.hidden {
+  display: none;
+}
+.popup-content {
+  background: #111;
+  padding: 20px;
+  border-radius: 12px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 0 15px var(--glow-main);
+}
+.popup-content h2 {
+  margin-top: 0;
+  color: var(--glow-main);
+}
+.popup-content input {
+  width: 100%;
+  margin: 6px 0 12px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--glow-main);
+  background: rgba(0,0,0,.4);
+  color: var(--white);
+}
+.popup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+
 .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:2px solid var(--glow-main)}
 .drawer-title{color:var(--glow-contrast);font-weight:800;text-shadow:0 0 6px var(--glow-main)}
 .drawer-body{padding:14px;display:flex;flex-direction:column;gap:10px}
