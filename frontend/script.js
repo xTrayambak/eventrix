@@ -94,6 +94,65 @@ window.addEventListener("click", (event) => {
   }
 });
 
+
+const registerBtn = document.getElementById("open-register");
+const registerModal = document.getElementById("register-modal");
+const registerCloseBtn = registerModal.querySelector(".close-btn");
+const regUserField = registerModal.getElementsByClassName("reg-username-field")[0];
+const regPassField = registerModal.getElementsByClassName("reg-pass-field")[0];
+const regSubmitBtn = registerModal.getElementsByClassName("btn-register-submit")[0];
+const registerStatus = document.getElementById("register-message");
+
+// Open modal
+registerBtn.addEventListener("click", () => {
+  registerModal.style.display = "block";
+});
+
+// Close modal
+registerCloseBtn.addEventListener("click", () => {
+  registerModal.style.display = "none";
+});
+
+// Close on outside click
+window.addEventListener("click", (event) => {
+  if (event.target === registerModal) {
+    registerModal.style.display = "none";
+  }
+});
+
+// Handle register submit
+regSubmitBtn.addEventListener("click", async () => {
+  let username = regUserField.value.trim();
+  let password = regPassField.value.trim();
+
+  if (!username || !password) {
+    registerStatus.textContent = "Please fill all fields.";
+    return;
+  }
+
+  try {
+    const response = await fetch(backend + "/auth/register", { 
+      method: "POST", 
+      body: JSON.stringify({ username, password }), 
+      headers: { "Content-Type": "application/json" } 
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      registerStatus.textContent = translateError(data);
+      return;
+    }
+
+    registerStatus.style.color = "green";
+    registerStatus.textContent = "✅ Account created! You can now log in.";
+    setTimeout(() => { registerModal.style.display = "none"; }, 1500);
+
+  } catch (exc) {
+    registerStatus.textContent = "An error occurred.";
+    throw exc;
+  }
+});
+
 function translateError(data)
 {
   console.log(data);
@@ -106,6 +165,8 @@ function translateError(data)
     case "EXPIREDTOKEN": return "Your login details have expired, please refresh this page to continue.";
     case "INVALIDAUTHHEADER": return "Invalid authentication headers passed to backend, please refresh this page.";
     case "MISSINGAUTHHEADER": return "Client did not send authentication bearer to backend, please refresh this page.";
+    case "USEREXISTS": return "This username is already taken. Please choose another.";
+
     default:
       return `An unknown error occurred! (${err})`;
   }
