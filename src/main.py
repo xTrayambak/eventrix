@@ -181,14 +181,16 @@ def login():
     data = request.get_json()
     username = data["username"]
     password = data["password"]
-    
+
     for user in User.select():
         if user.name != username:
             continue
 
         if user.password != password:
             continue
-        
+
+        print(user)
+ 
         token = generate_token_for_user(user.id)
         db.close()
         return jsonify({
@@ -208,9 +210,9 @@ def login():
 @app.route("/users/list", methods = ["GET"])
 # TODO: Call this when admin logs into dashboard
 def get_users():
-    intercept = verify_creds()
-    if intercept:
-        return intercept
+    # intercept = verify_creds()
+    # if intercept:
+    #    return intercept
 
     db = SimpleSQLite("data.sqlite", "r")
     User.attach(db)
@@ -228,9 +230,6 @@ def get_users():
 
 @app.route("/users/info", methods = ["GET"])
 def get_user():
-    intercept = verify_creds()
-    if intercept: return intercept
-
     db = SimpleSQLite("data.sqlite", "r")
     id = response.get_json()["id"]
     User.attach(db)
@@ -246,23 +245,45 @@ def get_user():
 
 @app.route("/events/list", methods = ["GET"])
 def events_list():
-    intercept = verify_creds()
-    if intercept:
-        return intercept
-    
+    uid = -1
+ 
     db = SimpleSQLite("data.sqlite", "r")
     Event.attach(db)
+    Token.attach(db)
+    User.attach(db)
     payload = {"events": []}
 
+    token = request.headers.get("Authorization")
+    if not token:
+        return jsonify({"error": "MISSINGAUTHHEADER"}), 400
+
+    if not token.startswith("Bearer "):
+        return jsonify({"error": "INVALIDAUTHHEADER"}), 400
+
+    token = token.split("Bearer ")[1]
+
+    for tok in Token.select():
+        if tok.code == token:
+            uid = tok.uid
+            break
+
+    if uid == -1:
+        return jsonify({"error": "UNPRIVILEGED"}), 400
+    
+    is_admin = find_user(uid).role == AdministratorRole
+
     for event in Event.select():
-        print(event.participants)
+        participants = parse_participants(event.participants)
+
+        if not is_admin and uid not in participants: continue
+
         payload["events"].append(
             {
                 "name": event.name,
                 "date": event.date,
                 "end": event.end,
                 "venue": event.venue,
-                "participants": parse_participants(event.participants)
+                "participants": participants
             }
         )
     
