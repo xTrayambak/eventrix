@@ -690,10 +690,11 @@ async function openEventPopup(defaultStart=null, defaultEnd=null) {
   var names = [];
   const users = await getUsers();
 
-  for (user of users) {
+  if (editingEvent)
+	{for (user of users) {
 		if (editingEvent.participants.includes(user.id))
 			names.push(user.name)
-	}
+	}}
   const isEditing = !!editingEvent;
   popupTitle.textContent = isEditing ? "Edit Event" : "Create Event";
   popupEventName.value = isEditing ? editingEvent.title : "";
