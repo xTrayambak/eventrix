@@ -424,3 +424,5 @@ def events_create():
     close_db(db)
 
     return "", 200
+
+app.run('0.0.0.0', int(os.getenv("PORT")))

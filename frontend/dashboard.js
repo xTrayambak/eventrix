@@ -64,7 +64,7 @@ class AuthInfo {
   }
 }
 
-const BackendUrl = "https://dexter.xtrayambak.xyz";
+const BackendUrl = "https://478f5f46aca4.ngrok-free.app/";
 var authInfo = new AuthInfo(localStorage.getItem("username"), localStorage.getItem("password"), undefined, 1);
 
 function populateDrawer() {
@@ -96,7 +96,7 @@ async function updateAuthInfo() {
   try {
 	  const resp = await fetch(`${BackendUrl}/auth/login`, {
 	    method: "POST",
-	    headers: { "Content-Type": "application/json" },
+	    headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "" },
 	    body: JSON.stringify({
 	      username: authInfo.username,
 	      password: authInfo.password,
@@ -284,6 +284,7 @@ async function getEvents() {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${authInfo.token}`,
+	    "ngrok-skip-browser-warning": ""
     },
   });
   if (!resp.ok) return;
@@ -559,7 +560,8 @@ taskSaveBtn.addEventListener("click", async () => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${authInfo.token}`
+      Authorization: `Bearer ${authInfo.token}`,
+	    "ngrok-skip-browser-warning": ""
     },
     body: JSON.stringify(payload)
   });
@@ -575,7 +577,7 @@ taskSaveBtn.addEventListener("click", async () => {
 // Load tasks from backend
 async function loadTasks() {
   const resp = await fetch(`${BackendUrl}/tasks/list`, {
-    headers: { Authorization: `Bearer ${authInfo.token}` }
+	  headers: { Authorization: `Bearer ${authInfo.token}`, "ngrok-skip-browser-warning": "" }
   });
   if (!resp.ok) return;
   tasks = await resp.json();
@@ -598,7 +600,8 @@ function renderTasks() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${authInfo.token}`
+            Authorization: `Bearer ${authInfo.token}`,
+		  "ngrok-skip-browser-warning": ""
           },
           body: JSON.stringify({ target: task.name })
         });
@@ -676,7 +679,7 @@ let editingEvent = null;
 
 async function getUsers()
 {
-	const resp = await fetch(`${BackendUrl}/users/list`);
+	const resp = await fetch(`${BackendUrl}/users/list`, {headers: {"ngrok-skip-browser-warning": ""}});
 	const data = await resp.json();
 
 	return data.users;
@@ -749,7 +752,8 @@ console.log(users)
       method:"POST",
       headers:{
         "Content-Type":"application/json",
-        Authorization: `Bearer ${authInfo.token}`
+        Authorization: `Bearer ${authInfo.token}`,
+	      "ngrok-skip-browser-warning": ""
       },
       body: JSON.stringify(payload)
     });
@@ -768,7 +772,8 @@ console.log(users)
         method:"POST",
         headers:{
           "Content-Type":"application/json",
-          Authorization: `Bearer ${authInfo.token}`
+          Authorization: `Bearer ${authInfo.token}`,
+		"ngrok-skip-browser-warning": ""
         },
         body: JSON.stringify({ target: oldName, updated: newName })
       });
@@ -781,7 +786,8 @@ console.log(users)
       method:"POST",
       headers:{
         "Content-Type":"application/json",
-        Authorization: `Bearer ${authInfo.token}`
+        Authorization: `Bearer ${authInfo.token}`,
+	      "ngrok-skip-browser-warning": ""
       },
       body: JSON.stringify({ target: newName, updated: parts })
       }

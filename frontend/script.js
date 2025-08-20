@@ -46,7 +46,7 @@ const passField = document.getElementsByClassName("pass-field")[0];
 const submitBtn = document.getElementsByClassName("btn-login-submit")[0];
 const loginStatus = document.getElementById("login-message");
 
-const backend = "https://dexter.xtrayambak.xyz";
+const backend = "https://478f5f46aca4.ngrok-free.app/";
 
 class AuthenticationInfo
 {
@@ -141,7 +141,7 @@ regSubmitBtn.addEventListener("click", async () => {
     const response = await fetch(backend + "/auth/register", { 
       method: "POST", 
       body: JSON.stringify({ username, password }), 
-      headers: { "Content-Type": "application/json" } 
+      headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "" } 
     });
 
     if (!response.ok) {
@@ -185,7 +185,7 @@ submitBtn.addEventListener("click", async (event) => {
   
   // Fetch login token from backend
   try {
-    const response = await fetch(backend + "/auth/login", { method: "POST", body: JSON.stringify({username: username, password: password}), headers: {"Content-Type": "application/json"} })
+    const response = await fetch(backend + "/auth/login", { method: "POST", body: JSON.stringify({username: username, password: password}), headers: {"Content-Type": "application/json", "ngrok-skip-browser-warning": ""} })
     if (!response.ok)
     {
       const data = await response.json();
