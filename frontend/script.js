@@ -46,7 +46,7 @@ const passField = document.getElementsByClassName("pass-field")[0];
 const submitBtn = document.getElementsByClassName("btn-login-submit")[0];
 const loginStatus = document.getElementById("login-message");
 
-const backend = "https://478f5f46aca4.ngrok-free.app/";
+const backend = "https://eventrix.onrender.com/";
 
 class AuthenticationInfo
 {

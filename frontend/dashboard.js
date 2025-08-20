@@ -64,7 +64,7 @@ class AuthInfo {
   }
 }
 
-const BackendUrl = "https://478f5f46aca4.ngrok-free.app/";
+const BackendUrl = "https://eventrix.onrender.com";
 var authInfo = new AuthInfo(localStorage.getItem("username"), localStorage.getItem("password"), undefined, 1);
 
 function populateDrawer() {
