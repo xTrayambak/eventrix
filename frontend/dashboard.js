@@ -422,7 +422,9 @@ prevBtn.addEventListener("click", () => {
     current.setMonth(current.getMonth() - 1);
     switchToMonth();
   }
-});
+
+  renderEvents();
+})
 nextBtn.addEventListener("click", () => {
   if (currentView === "week") {
     current.setDate(current.getDate() + 7);
@@ -431,6 +433,8 @@ nextBtn.addEventListener("click", () => {
     current.setMonth(current.getMonth() + 1);
     switchToMonth();
   }
+
+  renderEvents();
 });
 todayBtn.addEventListener("click", () => {
   current = new Date();
