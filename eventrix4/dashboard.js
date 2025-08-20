@@ -579,11 +579,12 @@ const taskSaveBtn = document.getElementById("taskSaveBtn");
 const taskCancelBtn = document.getElementById("taskCancelBtn");
 const taskList = document.getElementById("tasksList");
 
-let tasks = [];
+let tsk = localStorage.getItem("tasks");
+var tasks = tsk == undefined ? [] : JSON.stringify(tsk);
 
 // Open popup from "Add Task" button
 document.getElementById("addTaskBtn").addEventListener("click", () => {
-  taskNameInput.value = "";
+  taskNameInput.value = "";? 
   taskDueInput.value = "";
   taskPopup.classList.remove("hidden");
 });
@@ -602,30 +603,37 @@ taskSaveBtn.addEventListener("click", async () => {
     }
   };
 
-  const resp = await fetch(`${BackendUrl}/tasks/create`, {
+  /* const resp = await fetch(`${BackendUrl}/tasks/create`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${authInfo.token}`
     },
     body: JSON.stringify(payload)
-  });
+  }); */
+  let ev = localStorage.getItem("tasks");
+  var events = ev == undefined ? [] : JSON.parse(ev);
+  events.push({name: taskNameInput.value, due: new Date(taskDueInput.value).getTime()})
+  localStorage.setItem("tasks", JSON.stringify(events));
 
-  if (resp.ok) {
-    taskPopup.classList.add("hidden");
-    await loadTasks();   // reload the list
-  } else {
-    alert("Failed to create task");
-  }
+  // if (resp.ok) {
+  taskPopup.classList.add("hidden");
+  await loadTasks();   // reload the list
+  // } else {
+  //  alert("Failed to create task");
+  // }
 });
 
 // Load tasks from backend
 async function loadTasks() {
-  const resp = await fetch(`${BackendUrl}/tasks/list`, {
+  /* const resp = await fetch(`${BackendUrl}/tasks/list`, {
     headers: { Authorization: `Bearer ${authInfo.token}` }
   });
   if (!resp.ok) return;
-  tasks = await resp.json();
+  tasks = await resp.json(); */
+  let tsk = localStorage.getItem("tasks");
+  tasks = tsk == undefined ? [] : JSON.stringify(tsk);
+
   renderTasks();
 }
 
