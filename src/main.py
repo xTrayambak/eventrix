@@ -15,6 +15,7 @@ from simplesqlite.query import Set, Where
 import secrets
 import time
 import logging
+import os
 import uuid
 
 logging.basicConfig(level = logging.DEBUG)
